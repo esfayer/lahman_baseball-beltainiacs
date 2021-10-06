@@ -1,0 +1,36 @@
+/* SELECT 	p.namefirst,
+		p.namelast,
+		SUM(sa.salary)
+FROM people AS p
+LEFT JOIN collegeplaying AS c
+ON p.playerid = c.playerid
+LEFT JOIN schools AS s
+ON c.schoolid = s.schoolid
+LEFT JOIN salaries AS sa
+ON p.playerid = sa.playerid
+WHERE s.schoolname LIKE '%Vanderbilt%' AND sa.salary IS NOT NULL
+GROUP BY p.namefirst, p.namelast
+ORDER BY SUM(sa.salary) DESC; */
+
+/* SELECT 	SUM(po),
+		CASE
+			WHEN pos = 'OF' THEN 'Outfield'
+			WHEN pos = 'P' THEN 'Battery'
+			WHEN pos = 'C' THEN 'Battery'
+			WHEN pos = '1B' THEN 'Infield'
+			WHEN pos = '2B' THEN 'Infield'
+			WHEN pos = '3B' THEN 'Infield'
+			WHEN pos = 'SS' THEN 'Infield'
+			END AS pos_group
+FROM fielding
+WHERE yearid = '2016'
+GROUP BY pos_group */
+
+-- SELECT 	SUM(so) AS total_so, 
+-- 		SUM(ghome) AS total_ghome,
+-- 		SUM(hr) AS total_hr
+-- FROM teams
+-- WHERE ghome IS NOT NULL
+-- 	AND yearid BETWEEN 1920 AND 1929
+
+WITH 	 
