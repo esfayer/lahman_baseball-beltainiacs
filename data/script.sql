@@ -1,12 +1,19 @@
---finding avg strikeouts & home runs per game during for every decade from 1920 - 2016
+--q3
+SELECT 	p.namefirst,
+		p.namelast,
+		SUM(sa.salary)
+FROM people AS p
+LEFT JOIN collegeplaying AS c
+ON p.playerid = c.playerid
+LEFT JOIN schools AS s
+ON c.schoolid = s.schoolid
+LEFT JOIN salaries AS sa
+ON p.playerid = sa.playerid
+WHERE s.schoolname LIKE '%Vanderbilt%' AND sa.salary IS NOT NULL
+GROUP BY p.namefirst, p.namelast
+ORDER BY SUM(sa.salary) DESC;
 
-SELECT round(SUM(hr::numeric)/SUM(ghome::numeric),2) AS avg_hr_1920sgame,
-	   round(SUM(so::numeric)/SUM(ghome::numeric),2) AS avg_so_1920sgame,
-FROM teams
-WHERE ghome IS NOT NULL AND yearid BETWEEN 1920 AND 1929;
---avg hr = 0.80, avg so = 5.63
-
---below is attempting to categorize into decade
+--q5
 SELECT CASE WHEN yearid BETWEEN 1920 AND 1929 THEN '1920s'
 	   		WHEN yearid BETWEEN 1930 AND 1939 THEN '1930s' 
 			WHEN yearid BETWEEN 1940 AND 1949 THEN '1940s'
@@ -24,21 +31,136 @@ FROM teams
 WHERE ghome IS NOT NULL
 GROUP BY decade
 ORDER BY decade;
-
-
-
-
+--
+--
 -----Q6-----
-with total_sb_attempts AS (select playerid as p_id, sb, cs, (sb+cs) AS attempts
-						   from batting
-						   where cs is not null and sb is not null
-						   group by playerid, sb, cs
-						   having sb > 19)
-						 	   
-select people.namefirst, people.namelast, (batting.sb/total_sb_attempts.attempts) as avg_sb
-from batting inner join total_sb_attempts on batting.sb = total_sb_attempts.sb
-			 inner join people using (playerid)
-where yearid = 2016 and batting.sb is not null
-group by people.namefirst, people.namelast, avg_sb
+--andrea's attempts
+WITH sb_successes AS (SELECT playerid,
+							 sb,
+					  		 cs,
+					  		 yearid,
+					  		 SUM((sb) + (cs)) AS sb_attempt
+					   FROM batting
+					   GROUP BY playerid, yearid, sb, cs)
+						
+SELECT 	p.namefirst,
+		p.namelast,
+		ROUND((sba.sb::numeric / sba.sb_attempt::numeric) * 100, 2) AS sb_percent
+FROM people AS p
+LEFT JOIN sb_successes AS sba
+ON sba.playerid = p.playerid
+WHERE sba.sb_attempt >= 20
+AND sba.yearid = 2016
+GROUP BY p.namefirst, p.namelast, sb_percent
+ORDER BY sb_percent DESC;
 
+
+--
+--
+--
+--Q7--pt 1
+select name, yearid, w, wswin 
+from teams
+where yearid between 1970 and 2016
+group by name, yearid, w, wswin
+having wswin = 'N'
+order by w desc;
+--pt 2
+select name, yearid, w, wswin 
+from teams
+where yearid between 1970 and 2016
+group by name, yearid, w, wswin
+having wswin = 'Y'
+order by w;
+--pt3
+select name, yearid, w, wswin 
+from teams
+where yearid between 1970 and 2016
+group by name, yearid, w, wswin
+having wswin = 'Y' and yearid <> 1981
+order by w;
+--pt 4
+WITH final_table_please_god as (WITH wins_n_ws as (select name, yearid as year, wswin, sum(w) as total_wins
+												   from teams
+												   where yearid between 1970 and 2016
+												   group by name, yearid, wswin),
+	 				    		
+								new as (SELECT name, year, total_wins, wswin,
+										max(total_wins) OVER (PARTITION BY year ORDER BY year) as most_wins
+										FROM wins_n_ws)
+
+								SELECT name, year, total_wins, most_wins
+								FROM new
+								WHERE wswin='Y')
+
+SELECT round(SUM ((CASE WHEN total_wins = most_wins THEN 1 ELSE 0 END) * 100)/COUNT(*),3)
+FROM final_table_please_god;
+
+
+WITH winners as (
+SELECT 
+DISTINCT p.playerID
+
+
+FROM
+people AS p
+
+INNER JOIN managers m using (playerID)
+INNER JOIN teams t on (m.teamid=t.teamid AND m.yearID= t.yearID)
+INNER JOIN awardsManagers aw on (p.playerID=aw.playerID AND aw.yearID=t.yearID)
+
+WHERE aw.awardID is not null
+AND aw.awardid='TSN Manager of the Year'
+AND (aw.lgID='AL')
+
+INTERSECT 
+
+
+SELECT 
+distinct p.playerID
+
+
+FROM
+people p
+
+INNER JOIN managers m using (playerID)
+INNER JOIN teams t on (m.teamid=t.teamid AND m.yearID= t.yearID)
+INNER JOIN awardsManagers aw on (p.playerID=aw.playerID AND aw.yearID=t.yearID)
+
+WHERE aw.awardID is not null
+AND aw.awardid='TSN Manager of the Year'
+AND (aw.lgID='NL'))
+
+SELECT
+aw.playerid
+,concat(p.nameGiven,' ',p.nameLast)
+,aw.yearid
+,t.name
+
+FROM awardsmanagers aw
+
+JOIN winners using (playerid)
+JOIN managers m on (aw.playerid=m.playerid and aw.yearid=m.yearid)
+JOIN teams t on (t.teamid=m.teamid and t.yearid=aw.yearid)
+JOIN people p on aw.playerid=p.playerid
+
+WHERE aw.awardid='TSN Manager of the Year' 
+
+
+--
+SELECT distinct playerID,nameFirst,nameLast,height,batting.g, name
+FROM people inner join batting using(playerid)
+            inner join teams using (teamid)
+WHERE playerid='gaedeed01'
+ORDER BY height
+
+--
+WITH all_info as (SELECT playerID,nameFirst,nameLast,height,count(batting.g) as total_games, name as team_name
+FROM people inner join batting using(playerid)
+            inner join teams using (teamid)
+			GROUP by 1,2,3,4,6
+ORDER BY height)
+SELECT namefirst, namelast,height, total_games, team_name
+from all_info
+WHERE playerid='gaedeed01'
 
