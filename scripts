@@ -41,23 +41,32 @@ ORDER BY sb_success DESC; */
 
 SELECT	*
 FROM (
-		SELECT 	team,
-				park,
-				SUM((attendance) / (games)) AS avg_attendence
-		FROM homegames
+		SELECT 	p.park_name,
+				t.name,
+				SUM((h.attendance) / (h.games)) AS avg_attendence
+		FROM homegames AS h
+		LEFT JOIN parks AS p
+		ON h.park = p.park
+		LEFT JOIN teams AS t
+		ON h.team = t.teamid
 		WHERE games >= 10 AND year = 2016
-		GROUP BY team, park
+		GROUP BY p.park_name, t.name
 		ORDER BY avg_attendence DESC
 		LIMIT 5) AS top_5_avg_att
 UNION
 SELECT 	*
 FROM (
-				SELECT 	team,
-				park,
-				SUM((attendance) / (games)) AS avg_attendence
-		FROM homegames
-		WHERE games >= 10 AND year = 2016par
-		GROUP BY team, park
+		SELECT	p.park_name,
+				t.name,
+				SUM((h.attendance) / (h.games)) AS avg_attendence
+		FROM homegames AS h
+		LEFT JOIN parks AS p
+		ON h.park = p.park
+		LEFT JOIN teams AS t
+		ON h.team = t.teamid
+		WHERE games >= 10 AND year = 2016
+		GROUP BY p.park_name, t.name
 		ORDER BY avg_attendence ASC
 		LIMIT 5) AS bottom_5_avg_att
+ORDER BY avg_attendence DESC
  
