@@ -26,11 +26,38 @@ FROM fielding
 WHERE yearid = '2016'
 GROUP BY pos_group */
 
--- SELECT 	SUM(so) AS total_so, 
--- 		SUM(ghome) AS total_ghome,
--- 		SUM(hr) AS total_hr
--- FROM teams
--- WHERE ghome IS NOT NULL
--- 	AND yearid BETWEEN 1920 AND 1929
+-- WITH stolen_bases AS ()
 
-WITH 	 
+/* SELECT 	p.namefirst,
+		p.namelast,
+		SUM((b.sb)-(b.cs)) AS sb_success
+FROM batting AS b
+LEFT JOIN people AS p
+ON b.playerid = p.playerid
+WHERE b.sb >= 20
+AND b.yearid = 2016
+GROUP BY p.namefirst, p.namelast
+ORDER BY sb_success DESC; */
+
+SELECT	*
+FROM (
+		SELECT 	team,
+				park,
+				SUM((attendance) / (games)) AS avg_attendence
+		FROM homegames
+		WHERE games >= 10 AND year = 2016
+		GROUP BY team, park
+		ORDER BY avg_attendence DESC
+		LIMIT 5) AS top_5_avg_att
+UNION
+SELECT 	*
+FROM (
+				SELECT 	team,
+				park,
+				SUM((attendance) / (games)) AS avg_attendence
+		FROM homegames
+		WHERE games >= 10 AND year = 2016par
+		GROUP BY team, park
+		ORDER BY avg_attendence ASC
+		LIMIT 5) AS bottom_5_avg_att
+ 
