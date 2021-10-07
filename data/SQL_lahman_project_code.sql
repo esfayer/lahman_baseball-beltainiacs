@@ -114,51 +114,10 @@ last names and the number of home runs they hit in 2016.
 
 
 
-WITH 16_max as (
-	SELECT
-	p.playerid
-	,max(b.hr)
-	--,b.yearid
-	
-	FROM
-	people p
-	JOIN batting b using (playerid)
-	GROUP BY 1
-	
-	)
-
-
-
-SELECT
-p.playerid
---,b.yearid
-,max(b.HR)
-
-
-FROM
-people p
-
-INNER JOIN batting b using (playerid)
-
-WHERE
-	b.hr>0
-	--AND max(b.HR) = 
-	AND b.yearid = '2016'
-	AND p.playerid IN
-		(SELECT
-		playerid
-		FROM
-		people
-
-		WHERE EXTRACT(year from finalGame::date)-EXTRACT(year from debut::date)>=10)
-
-
-GROUP BY 1
-*/
-
---people who have been playing for 10 years and have hit any homeruns
-with tenyear as (SELECT
-		playerid
+with tenmax as (
+	with tenyear as (SELECT
+		concat(namefirst, ' ',namelast) as full_name
+		,playerid
 		FROM
 		people
 		
@@ -168,18 +127,61 @@ with tenyear as (SELECT
 		AND b.hr>0)
 		
 		SELECT
-		distinct tenyear.playerid
-		,b.yearid
-		,b.hr
+		distinct tenyear.playerid as id
+		,full_name
+		,b.yearid as year
+		,b.hr as hr
+		,max(b.hr) OVER (PARTITION BY tenyear.playerid ORDER BY tenyear.playerid) as player_max_hr
 		
 		FROM
 		tenyear
-		JOIN batting b using (playerid)
+		JOIN batting b using (playerid))
+		
+		SELECT
+		id
+		,full_name
+		,year
+		,player_max_hr
+		
+		FROM
+		tenmax
+		WHERE
+		year = '2016' and hr=player_max_hr;
+		
+		
+A:
+"Robinson Cano"
+"Bartolo Colon"
+"Rajai Davis"
+"Edwin Encarnacion"
+"Francisco Liriano"
+"Mike Napoli"
+"Angel Pagan"
+"Adam Wainwright"
 
 
---people who have hit a homerun in 2016
-SELECT
-	p.playerid
-	,b.yearid
-	,max(b.hr)
-	
+
+--7
+ From 1970 – 2016, what is the largest number of wins for a team that did not win the world series?
+
+
+select name, yearid, sum(w) as total_wins, wswin
+from teams
+where yearid between 1970 and 2016
+group by name, yearid, wswin
+having wswin = 'Y'
+order by total_wins 
+
+How often from 1970 – 2016 was it the case that a team
+with the most wins also won the world series? What percentage of the time?
+
+
+*/
+
+
+select teamid, yearid, sum(w) as total_wins, wswin
+from teams
+where yearid between 1970 and 2016
+group by teamid, yearid, wswin
+having wswin = 'N'
+order by total_wins
